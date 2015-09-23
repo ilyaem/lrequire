@@ -1,0 +1,23 @@
+<!doctype html>
+<html>
+    <head>
+        <title>lrequire example</title>
+        <style>
+            body { font-family:monospace; background:#ddd; color:#000 }
+            h1 { font-size:18px; margin:0; border-bottom:1px solid #bbb; display:inline-block; padding-bottom:2px }
+            h2 { font-size:16px; margin:0; }
+            #output { background:#eee; border:1px solid #ccc; padding:5px; margin-top:10px; }
+            #output div { padding:3px 3px; border-bottom:1px solid #ccc; white-space:pre-wrap; }
+            #output div.info { background:#ddf; }
+            #output div.error { background:#fdd; }
+            #output div.good { background:#dfd; }
+        </style>
+    </head>
+    <body>
+        <h1>Example of lrequire usage</h1>
+        <h2 class="title">look at the logs below:</h2>
+        <div id="output"></div>
+        <script type="text/javascript" src="../lrequire.js"></script>
+        <script type="text/javascript" src="example.js"></script>
+    </body>
+</html>
