@@ -1,18 +1,18 @@
 # lrequire
 
-Another one lightweight module loader; designed for in-browser usage.
+Another one lightweight module loader; designed for in-browser only usage.
 
-This one was wrote for simple module dependency system, compatible with RequireJS, without support in old browsers and bells and whistles for developers. (RequireJS now minified is **15,3 kb**, lrequire is **3,1 kb**)
+This one was written to get simple module dependency system, compatible with RequireJS, without support in old browsers and bells and whistles for developers. (RequireJS now minified is **15,3 kb**, lrequire is **3,1 kb**)
 
 Check example usage in **example** folder
 
-it exports **requirejs**, **require** and **define** variables.
+It exports **requirejs**, **require** and **define** variables.
 
 **requirejs** have only `config` method which support:
 
 * `baseUrl` - by default current page path, could be relative/absolute path with trailing slash
 * `waitSeconds` - timeout
-* `timeoutSpeed` - how often system check for timeout
+* `timeoutSpeed` - how often system checks for timeout
 * `cacheBuster` - add random number to the end of file
 * `paths` - aliases for module names
 
@@ -27,7 +27,7 @@ also **define** exports **amd** variable.
 
 **require** function accepts:
 
-* `dependencies` - module dependencies (could be array or string) - if only one dependency required then it will be returned
+* `dependencies` - module dependencies (could be array or string) (if only one dependency required then it'll be returned)
 * `callback` - function which will be executed when all dependencies resolved (optional)
 * `error callback` - function to execute if one of dependencies cannot be resolved
 
