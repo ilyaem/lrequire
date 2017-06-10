@@ -11,8 +11,8 @@ var log = function() {
 
 var localEnvironment = (location.protocol === 'file:');
 if(localEnvironment) {
-	var titleEl = document.getElementsByClassName('title')[0];
-	titleEl.innerText = titleEl.innerText.substr(0, titleEl.innerText.length - 1) + " (remember that XHR isn't possible in file:// protocol):";
+    var titleEl = document.getElementsByClassName('title')[0];
+    titleEl.innerText = titleEl.innerText.substr(0, titleEl.innerText.length - 1) + " (remember that XHR isn't possible in file:// protocol):";
 }
 
 log("1. configuring some stuff - sub directory for including files, timeout and aliases", 'info');
@@ -68,17 +68,31 @@ log("9. defining module which dependent on few external files - library, JSON fi
 if(localEnvironment) log("XHR isn't possible in file:// protocol", 'error');
 define('module4', [ 'lib', 'example.json', '../style.css' ], function(lib, json, css) {
     log("delayed from step 9 (module4 initialized)");
-	log(" > lib.capitalize('method') = " + lib.capitalize("method"));
+    log(" > lib.capitalize('method') = " + lib.capitalize("method"));
     log(" > json loaded", JSON.stringify(JSON.parse(json)));
     log(" > css loaded", css);
-	return { 'property':"module4 property" };
+    return { 'property':"module4 property" };
 });
 log("...", 'info');
 
 log("10. ..and now requiring that module (it should be delayed until external dependencies from previous module will be resolved)", 'info');
 require([ 'module4', 'lib' ], function(module4, lib) {
-	log("delayed from step 10", "module4 and library was required successfully");
-	log(" > module4 property = " + module4.property);
-	log(" > lib.capitalize('word') = " + lib.capitalize("word"));
+    log("delayed from step 10", "module4 and library was required successfully");
+    log(" > module4 property = " + module4.property);
+    log(" > lib.capitalize('word') = " + lib.capitalize("word"));
 });
+log("...", 'info');
+
+log("11. initializing modules via describe (delayed define)", 'info');
+describe('module5', [ 'module6' ], function(module6) {
+    log("described module5 initialized");
+    return { test:'module5' };
+});
+describe('module6', function(module4) {
+    log("described module6 is initialized too");
+    return { test:'module6' };
+});
+log("defining in batch");
+//define();
+require([ 'module5', 'module6' ]);
 log("...", 'info');

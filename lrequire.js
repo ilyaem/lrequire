@@ -1,9 +1,9 @@
 /* lrequire 0.1 (c) 2015, saikstin (licensed under CC BY-SA) */
-var requirejs, require, define;
+var requirejs, require, define, describe;
 (function() {
     var _modules = {};
     _modules.modules = _modules;
-	var _loaders = {};
+    var _loaders = {};
     var _handlers = {};
     var _options = {
         baseUrl: location.origin + (location.pathname.substr(0, location.pathname.lastIndexOf("/") + 1) || "/"),
@@ -12,6 +12,7 @@ var requirejs, require, define;
         cacheBuster: false,
         paths: {}
     };
+    var _delayed = {};
     _modules.requirejs = _modules.module = requirejs = {
         config: function(options) {
             if(options) {
@@ -31,7 +32,27 @@ var requirejs, require, define;
         }
     };
     
-    _modules.define = define = function(name, deps, arg, callback_error) {
+    _modules.describe = describe = function(name, other_args) {
+        var args = Array.prototype.slice.call(arguments);
+        if(args.length < 5) {
+            for(var i=0; i<5-args.length; i++) args.push(undefined);
+        }
+        args[4] = true; // skipExisting as true
+        _delayed[name] = args;
+    };
+
+    var _define_delayed = function(dep) {
+        var args = _delayed[dep];
+        delete _delayed[dep];
+        _modules.define.apply(_modules, args);
+    };
+    _modules.define = define = function(name, deps, arg, callback_error, skipExisting) {
+        if(typeof name === 'undefined' && typeof deps === 'undefined' && typeof arg === 'undefined') {
+            for(var key in _delayed) {
+                _define_delayed(key);
+            }
+            return;
+        }
         if(typeof name !== 'string') {
             deps = name, arg = deps;
             var scripts = document.getElementsByTagName('script');
@@ -42,17 +63,19 @@ var requirejs, require, define;
                 var fileName = filePath.match(/.*\/([^/]+)\.[^\.]+$/);
                 name = fileName && fileName[1] || "";
             }
+        } else if(_modules[name] && skipExisting) {
+            return;
         }
         if(typeof arg === 'undefined') arg = deps, deps = null;
         var isHandlerDefinition = (deps && deps.indexOf('module') !== -1 || false);
         var loader = _createLoader(name);
-		_resolve(deps, function(resolved) {
+        _resolve(deps, function(resolved) {
             if(typeof arg === 'function') {
                 _modules[name] = arg.apply(_modules, resolved);
             } else {
                 _modules[name] = arg;
             }
-			_resolveLoader(loader, true);
+            _resolveLoader(loader, true);
             if(isHandlerDefinition) _handlers[name] = _modules[name];
             
         }, function() {
@@ -78,77 +101,82 @@ var requirejs, require, define;
             if(typeof deps === 'string') deps = [ deps ];
             var depNames = deps.slice(0);
             var queueCount = 0;
-			var checkQueue = function() {
-				if(queueCount === 0) {
-					callback.call(_modules, deps);
-				}
-				return queueCount === 0;
-			};
+            var checkQueue = function() {
+                if(queueCount === 0) {
+                    callback.call(_modules, deps);
+                }
+                return queueCount === 0;
+            };
             for(var i=0; i<deps.length; i++) {
                 var dep = _options.paths[deps[i]] || deps[i];
                 var handler = dep.substr(0, dep.indexOf('!'));
-				var loader = _loaders[deps[i]];
-				(function(depIndex) {
-					if(handler && _handlers[handler]) {
-						queueCount++;
-						dep = dep.substr(dep.indexOf('!')+1);
-						_handlers[handler].load(dep, require, function loadCallback(loaded) {
-							_modules[depNames[depIndex]] = deps[depIndex] = loaded;
-							queueCount--;
-						}, requirejs.config);
-						
-					} else if(loader && !loader._loaded) {
-						queueCount++;
-						loader._loadHandlers.push(function() {
-							deps[depIndex] = _modules[deps[depIndex]];
-							queueCount--;
-							checkQueue();
-						});
-						
-					} else if(_modules[deps[i]]) {
-						deps[i] = _modules[deps[i]];
-						
-					} else {
-						queueCount++;
-						loader = _createLoader(depNames[depIndex]);
-						_load(dep, function(loaded) {
-							if(loaded === null) {
-								callback_error.call(_modules);
-								loader._failed = true;
-								throw new Error("cannot load dependency " + depNames[depIndex]);
-							} else {
-								_modules[depNames[depIndex]] = deps[depIndex] = (_modules[depNames[depIndex]] || loaded);
-								queueCount--;
-								checkQueue();
-							}
-							
-						});
-					}
-				})(i);
+                var loader = _loaders[deps[i]];
+                (function(depIndex) {
+                    if(handler && _handlers[handler]) {
+                        queueCount++;
+                        dep = dep.substr(dep.indexOf('!')+1);
+                        _handlers[handler].load(dep, require, function loadCallback(loaded) {
+                            _modules[depNames[depIndex]] = deps[depIndex] = loaded;
+                            queueCount--;
+                        }, requirejs.config);
+                        
+                    } else if(loader && !loader._loaded) {
+                        queueCount++;
+                        loader._loadHandlers.push(function() {
+                            deps[depIndex] = _modules[deps[depIndex]];
+                            queueCount--;
+                            checkQueue();
+                        });
+                        
+                    } else if(_modules[deps[i]]) {
+                        deps[i] = _modules[deps[i]];
+                        
+                    } else {
+                        queueCount++;
+                        loader = _createLoader(depNames[depIndex]);
+                        var loadResult = function(loaded) {
+                            if(loaded === null) {
+                                callback_error.call(_modules);
+                                loader._failed = true;
+                                throw new Error("cannot load dependency " + depNames[depIndex]);
+                            } else {
+                                _modules[depNames[depIndex]] = deps[depIndex] = (_modules[depNames[depIndex]] || loaded);
+                                queueCount--;
+                                checkQueue();
+                            }
+                        };
+                        if(_delayed[dep]) {
+                            var module = _define_delayed(dep);
+                            loadResult(module);
+                        } else {
+                            _load(dep, loadResult);
+                        }
+                    }
+                })(i);
             }
-			if(checkQueue()) {
-				return deps;
-			}
+            if(checkQueue()) {
+                return deps;
+            }
         } else {
             callback();
         }
     };
-	
-	var _createLoader = function(name) {
-		return name in _loaders ? _loaders[name] : _loaders[name] = {
-			_name: name,
-			_loaded: false,
-			_loadHandlers: []
-		};
-	};
-	var _resolveLoader = function(loader, success) {
-		loader = typeof(loader) === 'string' ? _loaders[loader] : loader;
-		loader._loaded = success;
-		for(var i=0; i<loader._loadHandlers.length; i++) {
-			var handler = loader._loadHandlers[i];
-			(typeof(handler) === 'function') && handler.call();
-		}
-	};
+    
+    var _createLoader = function(name) {
+        return name in _loaders ? _loaders[name] : _loaders[name] = {
+            _name: name,
+            _loaded: false,
+            _loadHandlers: []
+        };
+    };
+    var _resolveLoader = function(loader, success) {
+        loader = typeof(loader) === 'string' ? _loaders[loader] : loader;
+        loader._loaded = success;
+        for(var i=0; i<loader._loadHandlers.length; i++) {
+            var handler = loader._loadHandlers[i];
+            (typeof(handler) === 'function') && handler.call();
+        }
+    };
     
     var _getUrl = function(path) {
         return _options.baseUrl + path;
