@@ -1,4 +1,4 @@
-/* lrequire 0.1 (c) 2015, saikstin (licensed under CC BY-SA) */
+/* lrequire 0.1 (c) 2015, licensed under CC BY-SA */
 var requirejs, require, define;
 (function() {
     var _modules = {};
