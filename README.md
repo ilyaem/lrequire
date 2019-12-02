@@ -1,8 +1,8 @@
 # lrequire
 
-Another one lightweight module loader; designed for in-browser only usage.
+Yet another lightweight module loader; designed for in-browser only usage.
 
-This one was written to get simple module dependency system, compatible with RequireJS, without support in old browsers and bells and whistles for developers. (RequireJS now minified is **15,3 kb**, lrequire is **3,1 kb**)
+It was written to get simple module dependency system, compatible with RequireJS, without support in old browsers (and of course bells and whistles for developers). RequireJS now minified is **15,3 kb**, lrequire is **3,1 kb**
 
 Check example usage in **example** folder
 
@@ -35,4 +35,4 @@ also **define** exports **amd** variable.
 
 Here is also support for extension handling like `ext!some_module`
 
-licensed under CC BY-SA (c) saikstin
+licensed under CC BY-SA
